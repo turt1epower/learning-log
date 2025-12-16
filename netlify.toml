@@ -1,8 +1,10 @@
 [build]
-  publish = "."
-  command = "echo 'No build step required'"
-  
-# 모든 파일이 포함되도록 설정
-[context.production]
-  command = "echo 'No build step required'"
+  command = "npm run build"
+  publish = "dist"
+
+# SPA 라우팅을 위한 리다이렉트 설정
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
 

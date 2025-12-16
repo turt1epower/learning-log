@@ -1431,6 +1431,16 @@ document.getElementById('photoFileInput')?.addEventListener('change', async (e) 
         const resizedBlob = await resizeImage(file, 1200, 1200, 0.8);
         uploadedPhoto = resizedBlob;
         
+        // 사진 버튼 자동 활성화 및 사진 영역 표시
+        const photoBtn = document.querySelector('.record-type-btn[data-type="photo"]');
+        if (photoBtn && !photoBtn.classList.contains('active')) {
+            photoBtn.classList.add('active');
+        }
+        const photoInputArea = document.getElementById('photoInputArea');
+        if (photoInputArea) {
+            photoInputArea.style.display = 'block';
+        }
+        
         // 미리보기 표시
         const previewContainer = document.getElementById('photoPreviewContainer');
         if (previewContainer) {
@@ -1448,6 +1458,13 @@ document.getElementById('photoFileInput')?.addEventListener('change', async (e) 
                     uploadedPhoto = null;
                     previewContainer.innerHTML = '';
                     document.getElementById('photoFileInput').value = '';
+                    // 사진 버튼 비활성화
+                    if (photoBtn) {
+                        photoBtn.classList.remove('active');
+                    }
+                    if (photoInputArea) {
+                        photoInputArea.style.display = 'none';
+                    }
                 });
             };
             reader.readAsDataURL(resizedBlob);
@@ -2270,8 +2287,9 @@ document.getElementById('saveLessonBtn').addEventListener('click', async () => {
         });
     }
     
-    // 사진 업로드
-    if (photoActive && uploadedPhoto) {
+    // 사진 업로드 (uploadedPhoto가 있으면 자동으로 photoActive로 간주)
+    const hasPhoto = uploadedPhoto !== null;
+    if (hasPhoto) {
         try {
             const today = format(new Date(), 'yyyy-MM-dd');
             const timestamp = Date.now();
@@ -2289,7 +2307,7 @@ document.getElementById('saveLessonBtn').addEventListener('click', async () => {
     const activeTypes = [];
     if (textActive) activeTypes.push('text');
     if (drawingActive) activeTypes.push('drawing');
-    if (photoActive) activeTypes.push('photo');
+    if (photoActive || hasPhoto) activeTypes.push('photo');
     
     if (activeTypes.length === 0) {
         alert('텍스트, 도식, 사진 중 하나 이상을 선택해주세요.');
@@ -2305,7 +2323,7 @@ document.getElementById('saveLessonBtn').addEventListener('click', async () => {
         photo: photoUrl,
         hasText: textActive,
         hasDrawing: drawingActive,
-        hasPhoto: photoActive
+        hasPhoto: photoActive || hasPhoto
     });
     
     const today = format(new Date(), 'yyyy-MM-dd');
@@ -2329,7 +2347,7 @@ document.getElementById('saveLessonBtn').addEventListener('click', async () => {
     }
     
     // 저장 후 초기화
-    if (photoActive) {
+    if (photoActive || hasPhoto) {
         uploadedPhoto = null;
         const previewContainer = document.getElementById('photoPreviewContainer');
         if (previewContainer) {

@@ -1844,6 +1844,64 @@ function cropCanvas(canvas) {
     };
 }
 
+// 도식(그림 + 텍스트 상자)을 하나의 이미지로 합성하는 함수
+async function createCompositeDrawing(croppedData, textBoxes) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = croppedData.width;
+            canvas.height = croppedData.height;
+            const ctx = canvas.getContext('2d');
+
+            // 배경 흰색
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 잘려진 그림 먼저 그리기
+            const baseImg = new Image();
+            baseImg.onload = () => {
+                ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
+
+                // 텍스트 상자들 그리기
+                ctx.fillStyle = '#000000';
+                ctx.font = '16px Malgun Gothic, Apple SD Gothic Neo, sans-serif';
+                ctx.textBaseline = 'top';
+
+                textBoxes.forEach(box => {
+                    if (!box.text) return;
+                    // 간단히 여러 줄 나누기 (너무 길면 줄바꿈)
+                    const maxWidth = canvas.width - box.x - 10;
+                    const words = box.text.split(/\s+/);
+                    let line = '';
+                    let y = box.y;
+
+                    words.forEach(word => {
+                        const testLine = line ? line + ' ' + word : word;
+                        const metrics = ctx.measureText(testLine);
+                        if (metrics.width > maxWidth && line) {
+                            ctx.fillText(line, box.x, y);
+                            y += 20;
+                            line = word;
+                        } else {
+                            line = testLine;
+                        }
+                    });
+                    if (line) {
+                        ctx.fillText(line, box.x, y);
+                    }
+                });
+
+                resolve(canvas.toDataURL('image/png'));
+            };
+            baseImg.onerror = () => resolve(croppedData.dataUrl);
+            baseImg.src = croppedData.dataUrl;
+        };
+        img.onerror = () => resolve(croppedData.dataUrl);
+        img.src = croppedData.dataUrl;
+    });
+}
+
 function addTextBox(e) {
     if (currentTool !== 'textbox') return;
     
@@ -2270,8 +2328,11 @@ document.getElementById('saveLessonBtn').addEventListener('click', async () => {
             };
         });
         
+        // 도식 + 텍스트 상자를 하나의 이미지로 합성
+        const compositeDataUrl = await createCompositeDrawing(croppedData, textBoxes);
+        
         drawingContent = JSON.stringify({ 
-            canvas: croppedData.dataUrl, 
+            canvas: compositeDataUrl, 
             textBoxes,
             originalWidth: canvas.width,
             originalHeight: canvas.height,
@@ -3158,27 +3219,9 @@ async function showGrapeDetail(dateStr, emoji, feedbackText = null) {
                         if (contentData.hasDrawing && contentData.drawing) {
                             try {
                                 const drawingData = JSON.parse(contentData.drawing);
-                                const cropWidth = drawingData.cropWidth || drawingData.originalWidth || 1;
-                                const cropHeight = drawingData.cropHeight || drawingData.originalHeight || 1;
                                 html += `
                                     <div class="drawing-preview" style="position: relative; display: inline-block; margin-top: 10px;">
                                         <img src="${drawingData.canvas}" alt="도식" style="max-width: 100%; border: 1px solid #ddd; display: block; border-radius: 8px;" />
-                                        ${drawingData.textBoxes ? drawingData.textBoxes.map(box => `
-                                            <div class="text-box-preview"
-                                                 style="
-                                                    position: absolute;
-                                                    left: ${(box.x / cropWidth) * 100}%;
-                                                    top: ${(box.y / cropHeight) * 100}%;
-                                                    transform: translate(-0%, -0%);
-                                                    background: rgba(255,255,255,0.9);
-                                                    padding: 5px;
-                                                    border: 1px solid #a08bc8;
-                                                    border-radius: 3px;
-                                                    font-size: 0.9em;
-                                                ">
-                                                ${box.text}
-                                            </div>
-                                        `).join('') : ''}
                                     </div>
                                 `;
                             } catch (e) {
@@ -3195,27 +3238,9 @@ async function showGrapeDetail(dateStr, emoji, feedbackText = null) {
                             // 도식 데이터 파싱
                             try {
                                 const drawingData = JSON.parse(firstLesson.content);
-                                const cropWidth = drawingData.cropWidth || drawingData.originalWidth || 1;
-                                const cropHeight = drawingData.cropHeight || drawingData.originalHeight || 1;
                                 html += `
                                     <div class="drawing-preview" style="position: relative; display: inline-block; margin-top: 10px;">
                                         <img src="${drawingData.canvas}" alt="도식" style="max-width: 100%; border: 1px solid #ddd; display: block; border-radius: 8px;" />
-                                        ${drawingData.textBoxes ? drawingData.textBoxes.map(box => `
-                                            <div class="text-box-preview"
-                                                 style="
-                                                    position: absolute;
-                                                    left: ${(box.x / cropWidth) * 100}%;
-                                                    top: ${(box.y / cropHeight) * 100}%;
-                                                    transform: translate(-0%, -0%);
-                                                    background: rgba(255,255,255,0.9);
-                                                    padding: 5px;
-                                                    border: 1px solid #a08bc8;
-                                                    border-radius: 3px;
-                                                    font-size: 0.9em;
-                                                ">
-                                                ${box.text}
-                                            </div>
-                                        `).join('') : ''}
                                     </div>
                                 `;
                             } catch (e) {
@@ -3655,23 +3680,18 @@ async function loadReviewLessons() {
                     }
                 } else {
                     // 기존 형식: 단일 타입
-                    if (firstLesson.recordType === 'text') {
-                        contentHtml = `<div class="review-lesson-content">${firstLesson.content}</div>`;
-                    } else {
-                        const drawingData = contentData;
-                        contentHtml = `
-                            <div class="review-lesson-content">
-                                <div class="drawing-preview" style="position: relative; display: inline-block;">
-                                    <img src="${drawingData.canvas}" alt="도식" style="max-width: 100%; border: 1px solid #ddd; display: block;" />
-                                    ${drawingData.textBoxes ? drawingData.textBoxes.map(box => `
-                                        <div class="text-box-preview" style="position: absolute; left: ${box.displayX || box.x}; top: ${box.displayY || box.y}; background: rgba(255,255,255,0.9); padding: 5px; border-radius: 3px; font-size: 0.9em;">
-                                            ${box.text}
-                                        </div>
-                                    `).join('') : ''}
-                                </div>
+                if (firstLesson.recordType === 'text') {
+                    contentHtml = `<div class="review-lesson-content">${firstLesson.content}</div>`;
+                } else {
+                    const drawingData = contentData;
+                    contentHtml = `
+                        <div class="review-lesson-content">
+                            <div class="drawing-preview" style="position: relative; display: inline-block;">
+                                <img src="${drawingData.canvas}" alt="도식" style="max-width: 100%; border: 1px solid #ddd; display: block;" />
                             </div>
-                        `;
-                    }
+                        </div>
+                    `;
+                }
                 }
             } catch (e) {
                 // JSON 파싱 실패 시 텍스트로 처리

@@ -1,0 +1,7 @@
+# Netlify에서 제외할 파일/폴더 목록
+# 비어있으면 모든 파일이 포함됩니다
+node_modules/
+.git/
+.DS_Store
+*.log
+

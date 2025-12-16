@@ -981,8 +981,8 @@ async function sendMorningMessage() {
         // 대화 턴수에 따라 system message 동적 조정
         let currentSystemMessage = morningSystemMessage;
         
-        if (morningChatCount === 2 || morningChatCount === 3) {
-            // 2-3턴: 학생이 더 자세히 이야기할 수 있도록 질문으로 끝나도록 유도
+        if (morningChatCount === 1 || morningChatCount === 2 || morningChatCount === 3) {
+            // 1-3턴: 학생이 더 자세히 이야기할 수 있도록 질문으로 끝나도록 유도
             currentSystemMessage = morningSystemMessage + " 중요: 너의 응답은 반드시 질문으로 끝나야 해. 학생이 자신의 감정에 대해 더 자세히 이야기할 수 있도록 구체적이고 따뜻한 질문을 던져줘. 예: '그 기분이 어떤 느낌이었어?', '그때 뭐가 가장 기억에 남아?', '그 일이 너에게 어떤 의미였어?' 같은 식으로.";
         } else if (morningChatCount === 4) {
             // 4턴: 학생의 감정을 요약하고 정리 문장을 유도
@@ -1333,6 +1333,27 @@ document.querySelectorAll('.record-type-btn').forEach(btn => {
                 initDrawingCanvas();
             } else {
                 drawingArea.classList.remove('active');
+            }
+        } else if (type === 'photo') {
+            const photoInputArea = document.getElementById('photoInputArea');
+            if (btn.classList.contains('active')) {
+                if (photoInputArea) {
+                    photoInputArea.style.display = 'block';
+                }
+            } else {
+                if (photoInputArea) {
+                    photoInputArea.style.display = 'none';
+                }
+                // 사진 영역이 비활성화될 때 업로드된 사진도 초기화
+                uploadedPhoto = null;
+                const previewContainer = document.getElementById('photoPreviewContainer');
+                if (previewContainer) {
+                    previewContainer.innerHTML = '';
+                }
+                const photoFileInput = document.getElementById('photoFileInput');
+                if (photoFileInput) {
+                    photoFileInput.value = '';
+                }
             }
         } else if (type === 'photo') {
             const photoArea = document.getElementById('photoInputArea');
@@ -2197,7 +2218,7 @@ document.getElementById('saveLessonBtn').addEventListener('click', async () => {
     // 텍스트, 도식, 사진 모두 확인
     const textActive = document.getElementById('textInputArea').classList.contains('active');
     const drawingActive = document.getElementById('drawingArea').classList.contains('active');
-    const photoActive = document.getElementById('photoInputArea')?.style.display === 'block';
+    const photoActive = document.querySelector('.record-type-btn[data-type="photo"]')?.classList.contains('active');
     
     let textContent = '';
     let drawingContent = '';

@@ -1753,7 +1753,7 @@ function initDrawingCanvas() {
     updateRedoButton();
 }
 
-// Canvas 크롭 함수 - 그린 부분만 감지하여 크롭
+// Canvas 크롭 함수 - 도식(그림)과 텍스트 상자를 모두 포함하여 크롭
 function cropCanvas(canvas) {
     const ctx = canvas.getContext('2d');
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -1779,7 +1779,7 @@ function cropCanvas(canvas) {
         }
     }
     
-    // 텍스트 상자 영역도 고려
+    // 텍스트 상자 영역도 함께 포함
     const textBoxes = document.querySelectorAll('.text-box');
     textBoxes.forEach(box => {
         const boxRect = box.getBoundingClientRect();
@@ -2242,18 +2242,23 @@ document.getElementById('saveLessonBtn').addEventListener('click', async () => {
         const canvas = document.getElementById('drawingCanvas');
         const ctx = canvas.getContext('2d');
         
-        // 그린 부분만 감지하여 크롭
+        // 도식과 텍스트 상자가 모두 포함되도록 크롭 영역 계산
         const croppedData = cropCanvas(canvas);
         
+        // 크롭된 이미지 위에 다시 얹기 위한 텍스트 상자 좌표 변환
         const textBoxes = Array.from(document.querySelectorAll('.text-box')).map(box => {
             const boxRect = box.getBoundingClientRect();
             const canvasRect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / canvasRect.width;
             const scaleY = canvas.height / canvasRect.height;
             
-            // 크롭 오프셋 고려하여 좌표 조정
-            const boxX = (parseFloat(box.style.left) * scaleX) - croppedData.offsetX;
-            const boxY = (parseFloat(box.style.top) * scaleY) - croppedData.offsetY;
+            // 현재 화면상의 위치(px)를 캔버스 좌표계로 변환
+            const boxCanvasX = parseFloat(box.style.left) * scaleX;
+            const boxCanvasY = parseFloat(box.style.top) * scaleY;
+            
+            // 크롭 오프셋을 고려하여, 잘려진 이미지 내부 좌표로 변환
+            const boxX = boxCanvasX - croppedData.offsetX;
+            const boxY = boxCanvasY - croppedData.offsetY;
             
             return {
                 id: box.dataset.id,
@@ -2263,7 +2268,7 @@ document.getElementById('saveLessonBtn').addEventListener('click', async () => {
                 displayY: box.style.top,
                 text: box.textContent === '텍스트 입력' ? '' : box.textContent
             };
-        }).filter(box => box.x >= 0 && box.y >= 0 && box.x < croppedData.width && box.y < croppedData.height);
+        });
         
         drawingContent = JSON.stringify({ 
             canvas: croppedData.dataUrl, 
@@ -3125,66 +3130,105 @@ async function showGrapeDetail(dateStr, emoji, feedbackText = null) {
                         <div class="lesson-content" style="margin-top: 15px;">
                 `;
                     
-                    // 새로운 형식 (both, text, drawing) 처리
-                    try {
-                        const contentData = JSON.parse(firstLesson.content);
+                // 새로운 형식 (텍스트/도식/사진 조합) 또는 기존 형식 처리
+                try {
+                    const contentData = JSON.parse(firstLesson.content);
+                    
+                    // 새로운 형식인지 확인 (hasText, hasDrawing, hasPhoto 속성 존재)
+                    if (contentData.hasText !== undefined || contentData.hasDrawing !== undefined || contentData.hasPhoto !== undefined) {
+                        // 텍스트 내용 표시
+                        if (contentData.hasText && contentData.text) {
+                            html += `<div style="line-height: 1.6; margin-bottom: 15px; padding: 10px; background: white; border-radius: 8px;">${contentData.text}</div>`;
+                        }
                         
-                        // 새로운 형식인지 확인 (hasText, hasDrawing 속성 존재)
-                        if (contentData.hasText !== undefined && contentData.hasDrawing !== undefined) {
-                            // 텍스트 내용 표시
-                            if (contentData.hasText && contentData.text) {
-                                html += `<div style="line-height: 1.6; margin-bottom: 15px; padding: 10px; background: white; border-radius: 8px;">${contentData.text}</div>`;
-                            }
-                            
-                            // 도식 내용 표시
-                            if (contentData.hasDrawing && contentData.drawing) {
-                                try {
-                                    const drawingData = JSON.parse(contentData.drawing);
-                                    html += `
-                                        <div class="drawing-preview" style="position: relative; display: inline-block; margin-top: 10px;">
-                                            <img src="${drawingData.canvas}" alt="도식" style="max-width: 100%; border: 1px solid #ddd; display: block; border-radius: 8px;" />
-                                            ${drawingData.textBoxes ? drawingData.textBoxes.map(box => `
-                                                <div class="text-box-preview" style="position: absolute; left: ${box.displayX || box.x}; top: ${box.displayY || box.y}; background: rgba(255,255,255,0.9); padding: 5px; border: 1px solid #a08bc8; border-radius: 3px; font-size: 0.9em;">
-                                                    ${box.text}
-                                                </div>
-                                            `).join('') : ''}
-                                        </div>
-                                    `;
-                                } catch (e) {
-                                    html += `<p>도식 데이터를 불러올 수 없습니다.</p>`;
-                                }
-                            }
-                        } else {
-                            // 기존 형식 처리 (recordType 기반)
-                            if (firstLesson.recordType === 'text' || firstLesson.recordType === 'both') {
-                                html += `<div style="line-height: 1.6; padding: 10px; background: white; border-radius: 8px;">${firstLesson.content}</div>`;
-                            }
-                            
-                            if (firstLesson.recordType === 'drawing' || firstLesson.recordType === 'both') {
-                                // 도식 데이터 파싱
-                                try {
-                                    const drawingData = JSON.parse(firstLesson.content);
-                                    html += `
-                                        <div class="drawing-preview" style="position: relative; display: inline-block; margin-top: 10px;">
-                                            <img src="${drawingData.canvas}" alt="도식" style="max-width: 100%; border: 1px solid #ddd; display: block; border-radius: 8px;" />
-                                            ${drawingData.textBoxes ? drawingData.textBoxes.map(box => `
-                                                <div class="text-box-preview" style="position: absolute; left: ${box.displayX || box.x}; top: ${box.displayY || box.y}; background: rgba(255,255,255,0.9); padding: 5px; border: 1px solid #a08bc8; border-radius: 3px; font-size: 0.9em;">
-                                                    ${box.text}
-                                                </div>
-                                            `).join('') : ''}
-                                        </div>
-                                    `;
-                                } catch (e) {
-                                    html += `<p>도식 데이터를 불러올 수 없습니다.</p>`;
-                                }
+                            // 사진 내용 표시 (content.photo 또는 기존 lesson.photoUrl 사용)
+                            const photoSrc = contentData.photo || firstLesson.photoUrl;
+                            if (contentData.hasPhoto && photoSrc) {
+                            html += `
+                                <div style="margin-top: 15px;">
+                                    <strong>사진:</strong>
+                                    <div style="margin-top: 10px;">
+                                            <img src="${photoSrc}" alt="업로드된 사진" style="max-width: 100%; max-height: 500px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        
+                        // 도식 내용 표시 (텍스트 상자까지 함께 표시, 비율 기반 위치 조정)
+                        if (contentData.hasDrawing && contentData.drawing) {
+                            try {
+                                const drawingData = JSON.parse(contentData.drawing);
+                                const cropWidth = drawingData.cropWidth || drawingData.originalWidth || 1;
+                                const cropHeight = drawingData.cropHeight || drawingData.originalHeight || 1;
+                                html += `
+                                    <div class="drawing-preview" style="position: relative; display: inline-block; margin-top: 10px;">
+                                        <img src="${drawingData.canvas}" alt="도식" style="max-width: 100%; border: 1px solid #ddd; display: block; border-radius: 8px;" />
+                                        ${drawingData.textBoxes ? drawingData.textBoxes.map(box => `
+                                            <div class="text-box-preview"
+                                                 style="
+                                                    position: absolute;
+                                                    left: ${(box.x / cropWidth) * 100}%;
+                                                    top: ${(box.y / cropHeight) * 100}%;
+                                                    transform: translate(-0%, -0%);
+                                                    background: rgba(255,255,255,0.9);
+                                                    padding: 5px;
+                                                    border: 1px solid #a08bc8;
+                                                    border-radius: 3px;
+                                                    font-size: 0.9em;
+                                                ">
+                                                ${box.text}
+                                            </div>
+                                        `).join('') : ''}
+                                    </div>
+                                `;
+                            } catch (e) {
+                                html += `<p>도식 데이터를 불러올 수 없습니다.</p>`;
                             }
                         }
-                    } catch (e) {
-                        // JSON 파싱 실패 시 텍스트로 처리
-                        html += `<div style="line-height: 1.6; padding: 10px; background: white; border-radius: 8px;">${firstLesson.content}</div>`;
+                    } else {
+                        // 기존 형식 처리 (recordType 기반)
+                        if (firstLesson.recordType === 'text' || firstLesson.recordType === 'both') {
+                            html += `<div style="line-height: 1.6; padding: 10px; background: white; border-radius: 8px;">${firstLesson.content}</div>`;
+                        }
+                        
+                        if (firstLesson.recordType === 'drawing' || firstLesson.recordType === 'both') {
+                            // 도식 데이터 파싱
+                            try {
+                                const drawingData = JSON.parse(firstLesson.content);
+                                const cropWidth = drawingData.cropWidth || drawingData.originalWidth || 1;
+                                const cropHeight = drawingData.cropHeight || drawingData.originalHeight || 1;
+                                html += `
+                                    <div class="drawing-preview" style="position: relative; display: inline-block; margin-top: 10px;">
+                                        <img src="${drawingData.canvas}" alt="도식" style="max-width: 100%; border: 1px solid #ddd; display: block; border-radius: 8px;" />
+                                        ${drawingData.textBoxes ? drawingData.textBoxes.map(box => `
+                                            <div class="text-box-preview"
+                                                 style="
+                                                    position: absolute;
+                                                    left: ${(box.x / cropWidth) * 100}%;
+                                                    top: ${(box.y / cropHeight) * 100}%;
+                                                    transform: translate(-0%, -0%);
+                                                    background: rgba(255,255,255,0.9);
+                                                    padding: 5px;
+                                                    border: 1px solid #a08bc8;
+                                                    border-radius: 3px;
+                                                    font-size: 0.9em;
+                                                ">
+                                                ${box.text}
+                                            </div>
+                                        `).join('') : ''}
+                                    </div>
+                                `;
+                            } catch (e) {
+                                html += `<p>도식 데이터를 불러올 수 없습니다.</p>`;
+                            }
+                        }
                     }
-                    
-                    html += `</div></div>`;
+                } catch (e) {
+                    // JSON 파싱 실패 시 텍스트로 처리
+                    html += `<div style="line-height: 1.6; padding: 10px; background: white; border-radius: 8px;">${firstLesson.content}</div>`;
+                }
+                
+                html += `</div></div>`;
                 });
             
             html += '</div>';
@@ -3355,12 +3399,13 @@ async function loadSubjectLessons(subject) {
                             html += `<div style="line-height: 1.6; margin-bottom: 15px; padding: 10px; background: #fff5f0; border-radius: 8px;">${contentData.text}</div>`;
                         }
                         
-                        if (contentData.hasPhoto && contentData.photo) {
+                        const photoSrc = contentData.photo || firstLesson.photoUrl;
+                        if (contentData.hasPhoto && photoSrc) {
                             html += `
                                 <div style="margin-top: 15px;">
                                     <strong>사진:</strong>
                                     <div style="margin-top: 10px;">
-                                        <img src="${contentData.photo}" alt="업로드된 사진" style="max-width: 100%; max-height: 500px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
+                                        <img src="${photoSrc}" alt="업로드된 사진" style="max-width: 100%; max-height: 500px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
                                     </div>
                                 </div>
                             `;
@@ -3577,12 +3622,13 @@ async function loadReviewLessons() {
                     if (contentData.hasText && contentData.text) {
                         contentHtml += `<div class="review-lesson-content"><strong>텍스트:</strong><div style="margin-top: 10px;">${contentData.text}</div></div>`;
                     }
-                    if (contentData.hasPhoto && contentData.photo) {
+                    const photoSrc = contentData.photo || firstLesson.photoUrl;
+                    if (contentData.hasPhoto && photoSrc) {
                         contentHtml += `
                             <div class="review-lesson-content" style="margin-top: 15px;">
                                 <strong>사진:</strong>
                                 <div style="margin-top: 10px;">
-                                    <img src="${contentData.photo}" alt="업로드된 사진" style="max-width: 100%; max-height: 500px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
+                                    <img src="${photoSrc}" alt="업로드된 사진" style="max-width: 100%; max-height: 500px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
                                 </div>
                             </div>
                         `;

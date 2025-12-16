@@ -5,13 +5,13 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 // Firebase 설정
-// ⚠️ storageBucket 은 Firebase 콘솔에서 제공하는 형식(보통 "<projectId>.appspot.com")을 사용해야
-// Firebase Storage 업로드가 정상 동작합니다.
+// ⚠️ 반드시 Firebase 콘솔에 표시된 설정값을 그대로 사용해야 합니다.
+// 특히 storageBucket 은 보통 "<projectId>.appspot.com" 형식입니다.
 const firebaseConfig = {
   apiKey: "AIzaSyA-9lJU40kkicjT7-HLVxhkUrqMKMwBtek",
   authDomain: "learning-log-be16a.firebaseapp.com",
   projectId: "learning-log-be16a",
-  // Firebase 콘솔의 기본 버킷 도메인 형식으로 수정
+  // Firebase 콘솔에 표시되는 기본 버킷 이름으로 수정
   storageBucket: "learning-log-be16a.appspot.com",
   messagingSenderId: "4739118094",
   appId: "1:4739118094:web:08014a5113b6069d68f85f"

@@ -981,12 +981,12 @@ async function sendMorningMessage() {
         // 대화 턴수에 따라 system message 동적 조정
         let currentSystemMessage = morningSystemMessage;
         
-        if (morningChatCount === 1 || morningChatCount === 2) {
-            // 1-2턴: 학생이 더 자세히 이야기할 수 있도록 질문으로 끝나도록 유도
+        if (morningChatCount === 2 || morningChatCount === 3) {
+            // 2-3턴: 학생이 더 자세히 이야기할 수 있도록 질문으로 끝나도록 유도
             currentSystemMessage = morningSystemMessage + " 중요: 너의 응답은 반드시 질문으로 끝나야 해. 학생이 자신의 감정에 대해 더 자세히 이야기할 수 있도록 구체적이고 따뜻한 질문을 던져줘. 예: '그 기분이 어떤 느낌이었어?', '그때 뭐가 가장 기억에 남아?', '그 일이 너에게 어떤 의미였어?' 같은 식으로.";
-        } else if (morningChatCount === 3) {
-            // 3턴: 학생의 감정을 요약하고 정리 문장을 유도
-            currentSystemMessage = morningSystemMessage + " 중요: 학생이 지금까지 이야기한 감정을 요약해주고, 학생이 스스로 감정을 한 문장으로 정리할 수 있도록 안내해줘. 질문 형태가 아닌 요약과 안내 문장으로 끝내야 해. 예: '지금까지 너가 말한 걸 정리해보면... 이제 너의 기분을 한 문장으로 정리해볼래?'";
+        } else if (morningChatCount === 4) {
+            // 4턴: 학생의 감정을 요약하고 정리 문장을 유도
+            currentSystemMessage = morningSystemMessage + " 중요: 학생이 지금까지 이야기한 감정을 요약해주고, 학생이 스스로 감정을 한 문장으로 정리할 수 있도록 안내해줘. 그리고 이모티콘으로 표현하도록 유도해줘. 질문 형태가 아닌 요약과 안내 문장으로 끝내야 해. 예: '지금까지 너가 말한 걸 정리해보면... 이제 너의 기분을 한 문장으로 정리하고 이모티콘으로도 표현해볼래?'";
         }
 
         const response = await callChatGPT(morningChatMessages, currentSystemMessage);
@@ -999,36 +999,34 @@ async function sendMorningMessage() {
         }
         addChatMessage('assistant', response, 'chatMessages', true);
 
-        // 3턴일 때: 응답 후 추가로 정리 문장 요청 (질문이 아닌 요약 후 유도)
-        if (morningChatCount === 3 && !morningSummaryRequested) {
+        // 4턴일 때: 응답 후 이모티콘 선택 화면 표시
+        if (morningChatCount === 4 && !morningSummaryRequested) {
             const responseLength = response.length;
             const typingDelay = responseLength * 30; // 타이핑 시간 계산
             
             setTimeout(() => {
-                const emojiMessages = [
-                    '이제 그 기분을 이모티콘으로 표현해볼래? 😊',
-                    '지금 기분을 나타내는 이모티콘 하나 골라줄래? 😄',
-                    '이 기분을 이모티콘으로 보여줄 수 있을까? 🤔',
-                    '딱 맞는 이모티콘 하나 골라서 표현해봐! 💭',
-                    '어울리는 이모티콘 하나 찍어줄래? ✨',
-                    '지금 이 마음을 이모티콘으로 보여줘! 🎨'
-                ];
-                const emojiMessage = emojiMessages[Math.floor(Math.random() * emojiMessages.length)];
-                morningChatMessages.push({ role: 'assistant', content: emojiMessage });
-                addChatMessage('assistant', emojiMessage, 'chatMessages', true);
                 morningSummaryRequested = true;
                 
-                // 정리 문장 요청 후 이모지 선택 화면 표시
-                setTimeout(() => {
-                    const emotionSelection = document.getElementById('emotionSelection');
-                    if (emotionSelection) {
-                        emotionSelection.style.display = 'block';
-                    }
-                    
-                    // 입력창과 전송 버튼은 그대로 유지 (학생이 계속 수정할 수 있도록)
-                    // 전송 버튼 표시 상태 업데이트
-                    updateSubmitButtonVisibility();
-                }, 2000);
+                // 이모지 선택 화면 표시
+                const emotionSelection = document.getElementById('emotionSelection');
+                if (emotionSelection) {
+                    emotionSelection.style.display = 'block';
+                }
+                
+                // 입력창 placeholder 변경
+                const chatInput = document.getElementById('chatInput');
+                if (chatInput) {
+                    chatInput.placeholder = '나의 감정을 문장으로 표현해보세요';
+                }
+                
+                // 일반 전송 버튼 숨기기
+                const sendChatBtn = document.getElementById('sendChatBtn');
+                if (sendChatBtn) {
+                    sendChatBtn.style.display = 'none';
+                }
+                
+                // 전송 버튼 표시 상태 업데이트
+                updateSubmitButtonVisibility();
             }, typingDelay + 500);
         }
     } catch (error) {
@@ -2558,12 +2556,12 @@ async function sendClosingMessage() {
     }
     
     // 대화 턴수에 따라 system message 동적 조정
-    if (closingChatCount === 1 || closingChatCount === 2) {
-        // 1-2턴: 학생이 더 자세히 이야기할 수 있도록 질문으로 끝나도록 유도
+    if (closingChatCount === 2 || closingChatCount === 3) {
+        // 2-3턴: 학생이 더 자세히 이야기할 수 있도록 질문으로 끝나도록 유도
         currentSystemMessage = currentSystemMessage + " 중요: 너의 응답은 반드시 질문으로 끝나야 해. 학생이 자신의 현재 감정에 대해 더 자세히 이야기할 수 있도록 구체적이고 따뜻한 질문을 던져줘. 예: '그 기분이 어떤 느낌이었어?', '그때 뭐가 가장 기억에 남아?', '그 일이 너에게 어떤 의미였어?' 같은 식으로.";
-    } else if (closingChatCount === 3) {
-        // 3턴: 학생의 감정을 요약하고 정리 문장을 유도
-        currentSystemMessage = currentSystemMessage + " 중요: 학생이 지금까지 이야기한 감정을 요약해주고, 학생이 스스로 감정을 한 문장으로 정리할 수 있도록 안내해줘. 질문 형태가 아닌 요약과 안내 문장으로 끝내야 해. 예: '지금까지 너가 말한 걸 정리해보면... 이제 너의 기분을 한 문장으로 정리해볼래?'";
+    } else if (closingChatCount === 4) {
+        // 4턴: 학생의 감정을 요약하고 정리 문장을 유도
+        currentSystemMessage = currentSystemMessage + " 중요: 학생이 지금까지 이야기한 감정을 요약해주고, 학생이 스스로 감정을 한 문장으로 정리할 수 있도록 안내해줘. 그리고 이모티콘으로 표현하도록 유도해줘. 질문 형태가 아닌 요약과 안내 문장으로 끝내야 해. 예: '지금까지 너가 말한 걸 정리해보면... 이제 너의 기분을 한 문장으로 정리하고 이모티콘으로도 표현해볼래?'";
     }
 
     // 로딩 표시 없이 바로 응답 표시
@@ -2573,47 +2571,34 @@ async function sendClosingMessage() {
         
         addChatMessage('assistant', response, 'closingChatMessages', true);
 
-        // 3턴일 때: 응답 후 추가로 이모지 요청 (문장 요약은 이미 system message에서 유도됨)
-        if (closingChatCount === 3 && !closingSummaryRequested) {
+        // 4턴일 때: 응답 후 이모티콘 선택 화면 표시
+        if (closingChatCount === 4 && !closingSummaryRequested) {
             const responseLength = response.length;
             const typingDelay = responseLength * 30; // 타이핑 시간 계산
             
             setTimeout(() => {
-                const emojiMessages = [
-                    '이제 그 기분을 이모티콘으로 표현해볼래? 😊',
-                    '지금 기분을 나타내는 이모티콘 하나 골라줄래? 😄',
-                    '이 기분을 이모티콘으로 보여줄 수 있을까? 🤔',
-                    '딱 맞는 이모티콘 하나 골라서 표현해봐! 💭',
-                    '어울리는 이모티콘 하나 찍어줄래? ✨',
-                    '지금 이 마음을 이모티콘으로 보여줘! 🎨'
-                ];
-                const emojiMessage = emojiMessages[Math.floor(Math.random() * emojiMessages.length)];
-                closingChatMessages.push({ role: 'assistant', content: emojiMessage });
-                addChatMessage('assistant', emojiMessage, 'closingChatMessages', true);
                 closingSummaryRequested = true;
                 
-                // 정리 문장 요청 후 이모지 선택 화면 표시
-                setTimeout(() => {
-                    const closingEmotionSelection = document.getElementById('closingEmotionSelection');
-                    if (closingEmotionSelection) {
-                        closingEmotionSelection.style.display = 'block';
-                    }
-                    
-                    // 입력창 placeholder 변경
-                    const closingChatInput = document.getElementById('closingChatInput');
-                    if (closingChatInput) {
-                        closingChatInput.placeholder = '나의 감정을 한 문장으로 정리해보세요';
-                    }
-                    
-                    // 일반 전송 버튼 숨기기
-                    const sendClosingChatBtn = document.getElementById('sendClosingChatBtn');
-                    if (sendClosingChatBtn) {
-                        sendClosingChatBtn.style.display = 'none';
-                    }
-                    
-                    // 전송 버튼 표시 상태 업데이트
-                    updateClosingSubmitButtonVisibility();
-                }, 2000);
+                // 이모지 선택 화면 표시
+                const closingEmotionSelection = document.getElementById('closingEmotionSelection');
+                if (closingEmotionSelection) {
+                    closingEmotionSelection.style.display = 'block';
+                }
+                
+                // 입력창 placeholder 변경
+                const closingChatInput = document.getElementById('closingChatInput');
+                if (closingChatInput) {
+                    closingChatInput.placeholder = '나의 감정을 문장으로 표현해보세요';
+                }
+                
+                // 일반 전송 버튼 숨기기
+                const sendClosingChatBtn = document.getElementById('sendClosingChatBtn');
+                if (sendClosingChatBtn) {
+                    sendClosingChatBtn.style.display = 'none';
+                }
+                
+                // 전송 버튼 표시 상태 업데이트
+                updateClosingSubmitButtonVisibility();
             }, typingDelay + 500);
         }
     } catch (error) {
@@ -3954,11 +3939,12 @@ async function loadUserData() {
             closingChatCount = closingChatMessages.filter(m => m.role === 'user').length;
             closingTabInitialized = true; // 이미 채팅이 있으면 초기화 완료로 표시
             
-            if (closingChatCount >= 3) {
+            if (closingChatCount >= 4) {
                 document.getElementById('closingEmotionSelection').style.display = 'block';
                 const selectedBtn = Array.from(document.querySelectorAll('#closingEmotionSelection .emoji-btn'))
                     .find(btn => btn.dataset.emoji === closingEmotion);
                 if (selectedBtn) selectedBtn.classList.add('selected');
+                closingSummaryRequested = true;
             }
             
             if (data.submitted) {

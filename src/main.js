@@ -992,7 +992,15 @@ async function sendMorningMessage() {
         morningChatMessages.push({ role: 'assistant', content: response });
         
         // 로딩 메시지 제거하고 실제 응답 추가 (타이핑 효과)
-        document.getElementById(loadingId).parentElement.remove();
+        const loadingElement = document.getElementById(loadingId);
+        if (loadingElement) {
+            const wrapperElement = loadingElement.closest('.chat-message-wrapper');
+            if (wrapperElement) {
+                wrapperElement.remove();
+            } else if (loadingElement.parentElement) {
+                loadingElement.parentElement.remove();
+            }
+        }
         addChatMessage('assistant', response, 'chatMessages', true);
 
         // 3턴일 때: 응답 후 추가로 정리 문장 요청 (질문이 아닌 요약 후 유도)
@@ -1028,7 +1036,15 @@ async function sendMorningMessage() {
             }, typingDelay + 500);
         }
     } catch (error) {
-        document.getElementById(loadingId).parentElement.remove();
+        const loadingElement = document.getElementById(loadingId);
+        if (loadingElement) {
+            const wrapperElement = loadingElement.closest('.chat-message-wrapper');
+            if (wrapperElement) {
+                wrapperElement.remove();
+            } else if (loadingElement.parentElement) {
+                loadingElement.parentElement.remove();
+            }
+        }
         addChatMessage('assistant', '미안, 뭔가 오류가 난 것 같아. 잠시 후에 다시 한 번 시도해 줄래?', 'chatMessages', true);
         console.error(error);
     }
@@ -3418,8 +3434,9 @@ function addChatMessage(role, content, containerId, isTyping = false) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `chat-message ${role}`;
     
-    const id = 'msg_' + Date.now();
+    const id = 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     messageDiv.id = id;
+    messageWrapper.id = 'wrapper_' + id;
     messageWrapper.appendChild(messageDiv);
     container.appendChild(messageWrapper);
     

@@ -709,13 +709,30 @@ async function renderStudentSubmission(studentId, date, container) {
                             `;
                         }
                         
-                        // 도식 내용 표시 (합성 이미지만 출력)
+                        // 도식 내용 표시 (텍스트 상자까지 함께 표시, 비율 기반 위치 조정)
                         if (contentData.hasDrawing && contentData.drawing) {
                             try {
                                 const drawingData = JSON.parse(contentData.drawing);
+                                const cropWidth = drawingData.cropWidth || drawingData.originalWidth || 1;
+                                const cropHeight = drawingData.cropHeight || drawingData.originalHeight || 1;
                                 html += `
                                     <div class="drawing-preview" style="position: relative; display: inline-block; margin-top: 10px;">
                                         <img src="${drawingData.canvas}" alt="도식" style="max-width: 100%; border: 1px solid #ddd; display: block;" />
+                                        ${drawingData.textBoxes ? drawingData.textBoxes.map(box => `
+                                            <div class="text-box-preview" style="
+                                                position: absolute;
+                                                left: ${(box.x / cropWidth) * 100}%;
+                                                top: ${(box.y / cropHeight) * 100}%;
+                                                transform: translate(-0%, -0%);
+                                                background: rgba(255,255,255,0.9);
+                                                padding: 5px;
+                                                border: 1px solid #667eea;
+                                                border-radius: 3px;
+                                                font-size: 0.9em;
+                                            ">
+                                                ${box.text}
+                                            </div>
+                                        `).join('') : ''}
                                     </div>
                                 `;
                             } catch (e) {
@@ -729,16 +746,33 @@ async function renderStudentSubmission(studentId, date, container) {
                         }
                         
                         if (firstLesson.recordType === 'drawing' || firstLesson.recordType === 'both') {
-                            // 도식 데이터 파싱 (합성 이미지만 출력)
+                            // 도식 데이터 파싱
                             try {
                                 const drawingData = contentData;
+                                const cropWidth = drawingData.cropWidth || drawingData.originalWidth || 1;
+                                const cropHeight = drawingData.cropHeight || drawingData.originalHeight || 1;
                                 html += `
                                     <div class="drawing-preview" style="position: relative; display: inline-block; margin-top: 10px;">
                                         <img src="${drawingData.canvas}" alt="도식" style="max-width: 100%; border: 1px solid #ddd; display: block;" />
+                                        ${drawingData.textBoxes ? drawingData.textBoxes.map(box => `
+                                            <div class="text-box-preview" style="
+                                                position: absolute;
+                                                left: ${(box.x / cropWidth) * 100}%;
+                                                top: ${(box.y / cropHeight) * 100}%;
+                                                transform: translate(-0%, -0%);
+                                                background: rgba(255,255,255,0.9);
+                                                padding: 5px;
+                                                border: 1px solid #667eea;
+                                                border-radius: 3px;
+                                                font-size: 0.9em;
+                                            ">
+                                                ${box.text}
+                                            </div>
+                                        `).join('') : ''}
                                     </div>
                                 `;
                             } catch (e) {
-                                html += `<p>도식 데이터를 불러올 수 없습니다.</p>`;
+                                html += `<p>도식 데이터를 불러올 수 없습니다。</p>`;
                             }
                         }
                     }

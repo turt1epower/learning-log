@@ -2295,7 +2295,7 @@ document.getElementById('saveLessonBtn').addEventListener('click', async () => {
         textContent = document.getElementById('lessonText').innerHTML;
     }
     
-    // 도식 내용 저장 (크롭 적용)
+    // 도식 내용 저장 (크롭 적용, 합성 없이 그림과 텍스트 좌표만 저장)
     if (drawingActive) {
         const canvas = document.getElementById('drawingCanvas');
         const ctx = canvas.getContext('2d');
@@ -2303,18 +2303,15 @@ document.getElementById('saveLessonBtn').addEventListener('click', async () => {
         // 도식과 텍스트 상자가 모두 포함되도록 크롭 영역 계산
         const croppedData = cropCanvas(canvas);
         
-        // 크롭된 이미지 위에 다시 얹기 위한 텍스트 상자 좌표 변환
+        // 크롭된 영역 기준 좌표로 텍스트 상자 정보 저장
         const textBoxes = Array.from(document.querySelectorAll('.text-box')).map(box => {
-            const boxRect = box.getBoundingClientRect();
             const canvasRect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / canvasRect.width;
             const scaleY = canvas.height / canvasRect.height;
             
-            // 현재 화면상의 위치(px)를 캔버스 좌표계로 변환
             const boxCanvasX = parseFloat(box.style.left) * scaleX;
             const boxCanvasY = parseFloat(box.style.top) * scaleY;
             
-            // 크롭 오프셋을 고려하여, 잘려진 이미지 내부 좌표로 변환
             const boxX = boxCanvasX - croppedData.offsetX;
             const boxY = boxCanvasY - croppedData.offsetY;
             
@@ -2328,11 +2325,8 @@ document.getElementById('saveLessonBtn').addEventListener('click', async () => {
             };
         });
         
-        // 도식 + 텍스트 상자를 하나의 이미지로 합성
-        const compositeDataUrl = await createCompositeDrawing(croppedData, textBoxes);
-        
         drawingContent = JSON.stringify({ 
-            canvas: compositeDataUrl, 
+            canvas: croppedData.dataUrl, 
             textBoxes,
             originalWidth: canvas.width,
             originalHeight: canvas.height,
@@ -3219,9 +3213,27 @@ async function showGrapeDetail(dateStr, emoji, feedbackText = null) {
                         if (contentData.hasDrawing && contentData.drawing) {
                             try {
                                 const drawingData = JSON.parse(contentData.drawing);
+                                const cropWidth = drawingData.cropWidth || drawingData.originalWidth || 1;
+                                const cropHeight = drawingData.cropHeight || drawingData.originalHeight || 1;
                                 html += `
                                     <div class="drawing-preview" style="position: relative; display: inline-block; margin-top: 10px;">
                                         <img src="${drawingData.canvas}" alt="도식" style="max-width: 100%; border: 1px solid #ddd; display: block; border-radius: 8px;" />
+                                        ${drawingData.textBoxes ? drawingData.textBoxes.map(box => `
+                                            <div class="text-box-preview"
+                                                 style="
+                                                    position: absolute;
+                                                    left: ${(box.x / cropWidth) * 100}%;
+                                                    top: ${(box.y / cropHeight) * 100}%;
+                                                    transform: translate(-0%, -0%);
+                                                    background: rgba(255,255,255,0.9);
+                                                    padding: 5px;
+                                                    border: 1px solid #a08bc8;
+                                                    border-radius: 3px;
+                                                    font-size: 0.9em;
+                                                ">
+                                                ${box.text}
+                                            </div>
+                                        `).join('') : ''}
                                     </div>
                                 `;
                             } catch (e) {
@@ -3238,9 +3250,27 @@ async function showGrapeDetail(dateStr, emoji, feedbackText = null) {
                             // 도식 데이터 파싱
                             try {
                                 const drawingData = JSON.parse(firstLesson.content);
+                                const cropWidth = drawingData.cropWidth || drawingData.originalWidth || 1;
+                                const cropHeight = drawingData.cropHeight || drawingData.originalHeight || 1;
                                 html += `
                                     <div class="drawing-preview" style="position: relative; display: inline-block; margin-top: 10px;">
                                         <img src="${drawingData.canvas}" alt="도식" style="max-width: 100%; border: 1px solid #ddd; display: block; border-radius: 8px;" />
+                                        ${drawingData.textBoxes ? drawingData.textBoxes.map(box => `
+                                            <div class="text-box-preview"
+                                                 style="
+                                                    position: absolute;
+                                                    left: ${(box.x / cropWidth) * 100}%;
+                                                    top: ${(box.y / cropHeight) * 100}%;
+                                                    transform: translate(-0%, -0%);
+                                                    background: rgba(255,255,255,0.9);
+                                                    padding: 5px;
+                                                    border: 1px solid #a08bc8;
+                                                    border-radius: 3px;
+                                                    font-size: 0.9em;
+                                                ">
+                                                ${box.text}
+                                            </div>
+                                        `).join('') : ''}
                                     </div>
                                 `;
                             } catch (e) {
@@ -3651,13 +3681,24 @@ async function loadReviewLessons() {
                     if (contentData.hasDrawing && contentData.drawing) {
                         try {
                             const drawingData = JSON.parse(contentData.drawing);
+                            const cropWidth = drawingData.cropWidth || drawingData.originalWidth || 1;
+                            const cropHeight = drawingData.cropHeight || drawingData.originalHeight || 1;
                             contentHtml += `
                                 <div class="review-lesson-content" style="margin-top: 15px;">
                                     <strong>도식:</strong>
                                     <div class="drawing-preview" style="position: relative; display: inline-block; margin-top: 10px;">
                                         <img src="${drawingData.canvas}" alt="도식" style="max-width: 100%; border: 1px solid #ddd; display: block;" />
                                         ${drawingData.textBoxes ? drawingData.textBoxes.map(box => `
-                                            <div class="text-box-preview" style="position: absolute; left: ${box.displayX || box.x}; top: ${box.displayY || box.y}; background: rgba(255,255,255,0.9); padding: 5px; border-radius: 3px; font-size: 0.9em;">
+                                            <div class="text-box-preview" style="
+                                                position: absolute;
+                                                left: ${(box.x / cropWidth) * 100}%;
+                                                top: ${(box.y / cropHeight) * 100}%;
+                                                transform: translate(-0%, -0%);
+                                                background: rgba(255,255,255,0.9);
+                                                padding: 5px;
+                                                border-radius: 3px;
+                                                font-size: 0.9em;
+                                            ">
                                                 ${box.text}
                                             </div>
                                         `).join('') : ''}

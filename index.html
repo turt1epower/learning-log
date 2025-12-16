@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>배움공책 - 로그인</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <h1>📚 배움공책</h1>
+            <p class="subtitle">오늘 배운 것을 기록해요</p>
+            <div class="role-selection">
+                <button id="studentLogin" class="role-btn student-btn">
+                    👨‍🎓 학생으로 시작하기
+                </button>
+                <button id="teacherLogin" class="role-btn teacher-btn">
+                    👩‍🏫 교사로 시작하기
+                </button>
+            </div>
+            <div id="loginStatus" class="login-status"></div>
+        </div>
+    </div>
+    <script type="module" src="/src/index.js"></script>
+</body>
+</html>

@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>배움공책 - 학생</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+    <div class="student-container">
+        <!-- 헤더 -->
+        <header class="student-header animate__animated animate__fadeInDown">
+            <h1 id="studentHeaderTitle">📚 배움공책</h1>
+            <div class="user-info">
+                <div class="profile-section" id="profileSection">
+                    <div class="profile-image" id="profileImage" title="프로필 설정">👤</div>
+                    <span id="userName"></span>
+                </div>
+                <button id="fontSettingsBtn" class="settings-btn" title="폰트 설정">🔤</button>
+                <button id="logoutBtn" class="logout-btn">로그아웃</button>
+            </div>
+        </header>
+        
+        <!-- 프로필 설정 모달 -->
+        <div id="profileSettingsModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>프로필 설정</h2>
+                    <button class="modal-close" id="closeProfileModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="profile-settings-section">
+                        <label>이름:</label>
+                        <input type="text" id="profileNameInput" placeholder="이름을 입력하세요" maxlength="20" />
+                    </div>
+                    <div class="profile-settings-section">
+                        <label>프로필 이미지 (피드백 이모지):</label>
+                        <div class="emoji-selection-grid">
+                            <button class="emoji-option" data-emoji="⭐">⭐</button>
+                            <button class="emoji-option" data-emoji="👍">👍</button>
+                            <button class="emoji-option" data-emoji="💯">💯</button>
+                            <button class="emoji-option" data-emoji="🎉">🎉</button>
+                            <button class="emoji-option" data-emoji="🌟">🌟</button>
+                            <button class="emoji-option" data-emoji="💪">💪</button>
+                            <button class="emoji-option" data-emoji="✨">✨</button>
+                            <button class="emoji-option" data-emoji="🎯">🎯</button>
+                            <button class="emoji-option" data-emoji="👏">👏</button>
+                            <button class="emoji-option" data-emoji="🔥">🔥</button>
+                            <button class="emoji-option" data-emoji="💖">💖</button>
+                            <button class="emoji-option" data-emoji="🎊">🎊</button>
+                            <button class="emoji-option" data-emoji="💫">💫</button>
+                            <button class="emoji-option" data-emoji="🌈">🌈</button>
+                            <button class="emoji-option" data-emoji="☀️">☀️</button>
+                            <button class="emoji-option" data-emoji="🌺">🌺</button>
+                            <button class="emoji-option" data-emoji="🏆">🏆</button>
+                            <button class="emoji-option" data-emoji="👤">👤</button>
+                        </div>
+                        <p class="profile-hint">💡 받은 피드백 이모지를 프로필 이미지로 사용할 수 있어요!</p>
+                    </div>
+                    <button id="saveProfileBtn" style="width: 100%; padding: 12px; background: #a08bc8; color: white; border: none; border-radius: 8px; font-size: 1.1em; font-weight: bold; cursor: pointer; margin-top: 20px;">저장하기</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 폰트 설정 모달 -->
+        <div id="fontSettingsModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>폰트 설정</h2>
+                    <button class="modal-close" id="closeFontModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="font-upload-section">
+                        <label>폰트 파일 업로드:</label>
+                        <input type="file" id="fontFileInput" accept=".ttf,.otf,.woff,.woff2" />
+                        <p class="font-hint">지원 형식: TTF, OTF, WOFF, WOFF2</p>
+                    </div>
+                    <div class="current-font-section">
+                        <label>현재 적용된 폰트:</label>
+                        <select id="fontSelect">
+                            <option value="default">기본 폰트</option>
+                            <option value="custom">업로드한 폰트</option>
+                        </select>
+                    </div>
+                    <div class="font-preview">
+                        <p>폰트 미리보기:</p>
+                        <div id="fontPreview" class="font-preview-text">
+                            안녕하세요! 이것은 폰트 미리보기입니다. 📚
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 네비게이션 탭 -->
+        <nav class="tab-navigation animate__animated animate__fadeIn">
+            <button class="tab-btn active animate__animated" data-tab="morning">🌅 아침시간</button>
+            <button class="tab-btn animate__animated" data-tab="lessons">📝 수업 기록</button>
+            <button class="tab-btn animate__animated" data-tab="closing">🌙 종례시간</button>
+            <button class="tab-btn animate__animated" data-tab="calendar">🍇 포도통장</button>
+            <button class="tab-btn animate__animated" data-tab="subjectReview">📚 공책에서 찾아보기</button>
+        </nav>
+
+        <!-- 아침시간 탭 -->
+        <div id="morningTab" class="tab-content active">
+            <h2>오늘 아침 기분은 어때요?</h2>
+            <div class="chatbot-container" id="morningChatContainer">
+                <div id="chatMessages" class="chat-messages"></div>
+                <div class="chat-input-area">
+                    <input type="text" id="chatInput" placeholder="챗봇과 대화해보세요..." autocomplete="off" />
+                    <button id="sendChatBtn">전송</button>
+                </div>
+                <button id="recordEmotionBtn" class="record-emotion-btn" style="display: none;">감정 기록하기</button>
+                <div class="emotion-selection" id="emotionSelection" style="display: none;">
+                    <p>지금의 기분을 선택해주세요:</p>
+                    <div class="emotion-emoji">
+                        <button class="emoji-btn" data-emoji="😊">😊</button>
+                        <button class="emoji-btn" data-emoji="😢">😢</button>
+                        <button class="emoji-btn" data-emoji="😡">😡</button>
+                        <button class="emoji-btn" data-emoji="😴">😴</button>
+                        <button class="emoji-btn" data-emoji="😃">😃</button>
+                        <button class="emoji-btn" data-emoji="😌">😌</button>
+                        <button class="emoji-btn" data-emoji="🤔">🤔</button>
+                        <button class="emoji-btn" data-emoji="😎">😎</button>
+                        <button class="emoji-btn" data-emoji="😍">😍</button>
+                        <button class="emoji-btn" data-emoji="🥰">🥰</button>
+                        <button class="emoji-btn" data-emoji="😋">😋</button>
+                        <button class="emoji-btn" data-emoji="😮">😮</button>
+                        <button class="emoji-btn" data-emoji="😲">😲</button>
+                        <button class="emoji-btn" data-emoji="😰">😰</button>
+                        <button class="emoji-btn" data-emoji="😱">😱</button>
+                        <button class="emoji-btn" data-emoji="🤗">🤗</button>
+                        <button class="emoji-btn" data-emoji="🤩">🤩</button>
+                        <button class="emoji-btn" data-emoji="😇">😇</button>
+                        <button class="emoji-btn" data-emoji="🤭">🤭</button>
+                        <button class="emoji-btn" data-emoji="😏">😏</button>
+                        <button class="emoji-btn" data-emoji="😤">😤</button>
+                        <button class="emoji-btn" data-emoji="😭">😭</button>
+                        <button class="emoji-btn" data-emoji="😓">😓</button>
+                        <button class="emoji-btn" data-emoji="😪">😪</button>
+                        <button class="emoji-btn" data-emoji="🤤">🤤</button>
+                        <button class="emoji-btn" data-emoji="😵">😵</button>
+                        <button class="emoji-btn" data-emoji="🤯">🤯</button>
+                        <button class="emoji-btn" data-emoji="🥳">🥳</button>
+                        <button class="emoji-btn" data-emoji="😴">😴</button>
+                        <button class="emoji-btn" data-emoji="🤢">🤢</button>
+                        <button class="emoji-btn" data-emoji="🤮">🤮</button>
+                    </div>
+                    <div class="custom-emoji-input">
+                        <label>직접 입력하기:</label>
+                        <input type="text" id="customEmojiInput" placeholder="원하는 이모지를 입력하세요 (예: 😊)" maxlength="2" />
+                        <button id="addCustomEmojiBtn" class="add-emoji-btn">추가</button>
+                    </div>
+                    <button id="submitMorningEmotionBtn" class="submit-morning-emotion-btn" style="display: none; margin-top: 20px; padding: 12px 30px; background: linear-gradient(135deg, #a08bc8, #b5a0d8); color: white; border: none; border-radius: 25px; font-size: 1.1em; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(160, 139, 200, 0.3);">전송하기</button>
+                </div>
+            </div>
+            <div id="morningCompleteMessage" class="morning-complete-message" style="display: none; margin-top: 20px; padding: 20px; text-align: center; background: linear-gradient(135deg, rgba(255, 182, 193, 0.2), rgba(255, 228, 225, 0.2)); border-radius: 15px; border: 2px solid rgba(160, 139, 200, 0.3);">
+                <p style="font-size: 1.2em; color: #a08bc8; margin: 0; font-weight: bold;">✨ 오늘 아침의 감정을 확인했으니, 배움을 기록하러 가볼까요? 📚</p>
+            </div>
+            <div id="morningAlreadyRecorded" class="already-recorded" style="display: none; text-align: center; margin-top: 15px;">
+                <button id="restartMorningChatBtn" class="restart-chat-btn" style="padding: 8px 20px; font-size: 0.9em; background: rgba(160, 139, 200, 0.2); color: #a08bc8; border: 1px solid #a08bc8; border-radius: 15px; cursor: pointer;">
+                    다시 대화하기
+                </button>
+            </div>
+        </div>
+        <!-- 수업 기록 탭 -->
+        <div id="lessonsTab" class="tab-content">
+            <div class="lesson-tab-navigation">
+                <button class="lesson-tab-btn active" data-lesson-tab="write">📝 배운 내용 기록하기</button>
+                <button class="lesson-tab-btn" data-lesson-tab="review">👀 배운 내용 확인하기</button>
+            </div>
+            
+            <!-- 배운 내용 기록하기 -->
+            <div id="writeLessonTab" class="lesson-tab-content active">
+                <h2>오늘 배운 내용 기록하기</h2>
+                <div class="lesson-form">
+                <div class="form-group">
+                    <label>교시 선택 (여러 개 선택 가능):</label>
+                    <div class="period-checkboxes">
+                        <label><input type="checkbox" value="1"> 1교시</label>
+                        <label><input type="checkbox" value="2"> 2교시</label>
+                        <label><input type="checkbox" value="3"> 3교시</label>
+                        <label><input type="checkbox" value="4"> 4교시</label>
+                        <label><input type="checkbox" value="5"> 5교시</label>
+                        <label><input type="checkbox" value="6"> 6교시</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>과목 선택:</label>
+                    <select id="subjectSelect">
+                        <option value="">과목을 선택하세요</option>
+                        <option value="국어">국어</option>
+                        <option value="수학">수학</option>
+                        <option value="사회">사회</option>
+                        <option value="영어">영어</option>
+                        <option value="음악">음악</option>
+                        <option value="미술">미술</option>
+                        <option value="체육">체육</option>
+                        <option value="도덕">도덕</option>
+                        <option value="과학">과학</option>
+                        <option value="실과">실과</option>
+                        <option value="자율">자율</option>
+                        <option value="진로">진로</option>
+                        <option value="동아리">동아리</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>배움 주제:</label>
+                    <input type="text" id="lessonTopic" class="topic-input" placeholder="오늘 배운 주제를 문장으로 적어주세요 (예: 분수의 덧셈과 뺄셈)" />
+                </div>
+                <div class="form-group">
+                    <label>기록 방식 (둘 다 사용 가능):</label>
+                    <div class="record-type-tabs">
+                        <button class="record-type-btn" data-type="text">✍️ 텍스트로 기록</button>
+                        <button class="record-type-btn" data-type="drawing">🎨 도식으로 기록</button>
+                        <button class="record-type-btn" data-type="photo">📷 사진 첨부하기</button>
+                    </div>
+                </div>
+                
+                <!-- 사진 첨부 영역 -->
+                <div id="photoInputArea" class="input-area" style="display: none;">
+                    <div class="photo-upload-section">
+                        <input type="file" id="photoFileInput" accept="image/*" style="display: none;" />
+                        <button id="selectPhotoBtn" class="photo-select-btn" style="padding: 12px 24px; background: linear-gradient(135deg, #a08bc8, #b5a0d8); color: white; border: none; border-radius: 8px; font-size: 1em; cursor: pointer; margin-bottom: 15px;">📷 사진 선택하기</button>
+                        <div id="photoPreviewContainer" style="margin-top: 15px;"></div>
+                    </div>
+                </div>
+                
+                <!-- 텍스트 입력 영역 -->
+                <div id="textInputArea" class="input-area">
+                    <div class="text-format-tools">
+                        <button id="textUndoBtn" class="format-tool-btn" title="뒤로 돌아가기">↶ 뒤로 돌아가기</button>
+                        <button id="boldBtn" class="format-tool-btn" title="굵게">B</button>
+                        <button id="underlineBtn" class="format-tool-btn" title="밑줄">U</button>
+                        <button id="highlightBtn" class="format-tool-btn" title="형광펜">🖍️</button>
+                        <button id="fontSizeSmallBtn" class="format-tool-btn" title="작게">작게</button>
+                        <button id="fontSizeNormalBtn" class="format-tool-btn active" title="보통">보통</button>
+                        <button id="fontSizeLargeBtn" class="format-tool-btn" title="크게">크게</button>
+                        <button id="fontSizeXLargeBtn" class="format-tool-btn" title="아주 크게">아주 크게</button>
+                        <span class="format-hint">💡 텍스트를 선택한 후 버튼을 클릭하면 선택한 부분만 변경됩니다</span>
+                    </div>
+                    <div id="lessonText" class="rich-text-editor" contenteditable="true" placeholder="오늘 배운 내용을 자유롭게 적어보세요..."></div>
+                </div>
+
+                <!-- 도식 그리기 영역 -->
+                <div id="drawingArea" class="input-area">
+                    <div class="drawing-tools">
+                        <button id="penTool" class="tool-btn active">✏️ 펜</button>
+                        <button id="textBoxTool" class="tool-btn">📝 텍스트 상자</button>
+                        <button id="undoBtn" class="tool-btn">↶ 뒤로 돌아가기</button>
+                        <button id="redoBtn" class="tool-btn">↷ 다시 실행</button>
+                        <input type="range" id="penSize" min="1" max="10" value="3">
+                        <span id="penSizeDisplay">3</span>
+                    </div>
+                    <div class="color-palette-section">
+                        <label>색깔 선택:</label>
+                        <div class="color-palette">
+                            <button class="color-btn" data-color="#000000" style="background-color: #000000;" title="검정"></button>
+                            <button class="color-btn" data-color="#FF0000" style="background-color: #FF0000;" title="빨강"></button>
+                            <button class="color-btn" data-color="#0000FF" style="background-color: #0000FF;" title="파랑"></button>
+                            <button class="color-btn" data-color="#00FF00" style="background-color: #00FF00;" title="초록"></button>
+                            <button class="color-btn" data-color="#FFFF00" style="background-color: #FFFF00;" title="노랑"></button>
+                            <button class="color-btn" data-color="#FF00FF" style="background-color: #FF00FF;" title="자홍"></button>
+                            <button class="color-btn" data-color="#00FFFF" style="background-color: #00FFFF;" title="청록"></button>
+                            <button class="color-btn" data-color="#FFA500" style="background-color: #FFA500;" title="주황"></button>
+                            <button class="color-btn" data-color="#800080" style="background-color: #800080;" title="보라"></button>
+                            <button class="color-btn" data-color="#A52A2A" style="background-color: #A52A2A;" title="갈색"></button>
+                            <input type="color" id="customColorPicker" value="#000000" title="커스텀 색상">
+                            <button id="addCustomColorBtn" class="add-color-btn" title="커스텀 색상 추가">+</button>
+                        </div>
+                    </div>
+                    <div class="canvas-wrapper">
+                        <canvas id="drawingCanvas" width="800" height="600"></canvas>
+                        <div id="textBoxes" class="text-boxes-container"></div>
+                    </div>
+                </div>
+
+                    <button id="saveLessonBtn" class="save-btn">저장하기</button>
+                </div>
+            </div>
+            
+            <!-- 배운 내용 확인하기 -->
+            <div id="reviewLessonTab" class="lesson-tab-content">
+                <h2>배운 내용 확인하기</h2>
+                <div id="reviewLessonsContainer" class="review-lessons-container">
+                    <p class="empty-message">기록된 내용이 없습니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 종례시간 탭 -->
+        <div id="closingTab" class="tab-content">
+            <h2>오늘 하루는 어땠나요?</h2>
+            <div class="chatbot-container">
+                <div id="closingChatMessages" class="chat-messages"></div>
+                <div class="chat-input-area">
+                    <input type="text" id="closingChatInput" placeholder="챗봇과 대화해보세요..." autocomplete="off" />
+                    <button id="sendClosingChatBtn">전송</button>
+                </div>
+                <div class="emotion-selection" id="closingEmotionSelection" style="display: none;">
+                    <p>오늘의 기분을 선택해주세요:</p>
+                    <div class="emotion-emoji">
+                        <button class="emoji-btn" data-emoji="😊">😊</button>
+                        <button class="emoji-btn" data-emoji="😢">😢</button>
+                        <button class="emoji-btn" data-emoji="😡">😡</button>
+                        <button class="emoji-btn" data-emoji="😴">😴</button>
+                        <button class="emoji-btn" data-emoji="😃">😃</button>
+                        <button class="emoji-btn" data-emoji="😌">😌</button>
+                        <button class="emoji-btn" data-emoji="🤔">🤔</button>
+                        <button class="emoji-btn" data-emoji="😎">😎</button>
+                        <button class="emoji-btn" data-emoji="😍">😍</button>
+                        <button class="emoji-btn" data-emoji="🥰">🥰</button>
+                        <button class="emoji-btn" data-emoji="😋">😋</button>
+                        <button class="emoji-btn" data-emoji="😮">😮</button>
+                        <button class="emoji-btn" data-emoji="😲">😲</button>
+                        <button class="emoji-btn" data-emoji="😰">😰</button>
+                        <button class="emoji-btn" data-emoji="😱">😱</button>
+                        <button class="emoji-btn" data-emoji="🤗">🤗</button>
+                        <button class="emoji-btn" data-emoji="🤩">🤩</button>
+                        <button class="emoji-btn" data-emoji="😇">😇</button>
+                        <button class="emoji-btn" data-emoji="🤭">🤭</button>
+                        <button class="emoji-btn" data-emoji="😏">😏</button>
+                        <button class="emoji-btn" data-emoji="😤">😤</button>
+                        <button class="emoji-btn" data-emoji="😭">😭</button>
+                        <button class="emoji-btn" data-emoji="😓">😓</button>
+                        <button class="emoji-btn" data-emoji="😪">😪</button>
+                        <button class="emoji-btn" data-emoji="🤤">🤤</button>
+                        <button class="emoji-btn" data-emoji="😵">😵</button>
+                        <button class="emoji-btn" data-emoji="🤯">🤯</button>
+                        <button class="emoji-btn" data-emoji="🥳">🥳</button>
+                        <button class="emoji-btn" data-emoji="😴">😴</button>
+                        <button class="emoji-btn" data-emoji="🤢">🤢</button>
+                        <button class="emoji-btn" data-emoji="🤮">🤮</button>
+                    </div>
+                    <div class="custom-emoji-input">
+                        <label>직접 입력하기:</label>
+                        <input type="text" id="customClosingEmojiInput" placeholder="원하는 이모지를 입력하세요 (예: 😊)" maxlength="2" />
+                        <button id="addCustomClosingEmojiBtn" class="add-emoji-btn">추가</button>
+                    </div>
+                </div>
+                <button id="submitBtn" class="submit-btn" style="display: none;">📤 배움공책 제출하기</button>
+            </div>
+        </div>
+
+        <!-- 포도 송이 탭 -->
+        <div id="calendarTab" class="tab-content">
+            <h2>🍇 포도통장</h2>
+            <div class="grape-cluster-container">
+                <div class="grape-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">수집한 포도알</span>
+                        <span class="stat-value" id="grapeCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">완성한 송이</span>
+                        <span class="stat-value" id="clusterCount">0</span>
+                    </div>
+                </div>
+                <div id="grapeClusters" class="grape-clusters"></div>
+            </div>
+        </div>
+        
+        <!-- 포도알 상세 정보 모달 -->
+        <div id="grapeDetailModal" class="modal" style="display: none;">
+            <div class="modal-content grape-detail-modal">
+                <div class="modal-header">
+                    <h2 id="grapeDetailDate"></h2>
+                    <button class="modal-close" id="closeGrapeModal">&times;</button>
+                </div>
+                <div class="modal-body" id="grapeDetailContent">
+                    <!-- 포도알 상세 정보가 여기에 표시됩니다 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 공책에서 찾아보기 탭 -->
+        <div id="subjectReviewTab" class="tab-content">
+            <h2>📚 공책에서 찾아보기</h2>
+            <div class="subject-filter-section" style="margin-bottom: 25px;">
+                <label for="subjectFilter" style="font-weight: bold; margin-right: 15px;">과목 선택:</label>
+                <select id="subjectFilter" style="padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; min-width: 200px;">
+                    <option value="">전체 과목</option>
+                    <option value="국어">국어</option>
+                    <option value="수학">수학</option>
+                    <option value="사회">사회</option>
+                    <option value="과학">과학</option>
+                    <option value="영어">영어</option>
+                    <option value="음악">음악</option>
+                    <option value="미술">미술</option>
+                    <option value="체육">체육</option>
+                    <option value="도덕">도덕</option>
+                    <option value="실과">실과</option>
+                </select>
+            </div>
+            <div id="subjectLessonsContainer" class="subject-lessons-container">
+                <p class="empty-message">과목을 선택하면 해당 과목의 공책 내용을 모아서 볼 수 있어요!</p>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>
+

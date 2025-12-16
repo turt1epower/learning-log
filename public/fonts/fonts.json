@@ -1,0 +1,21 @@
+{
+  "fonts": [
+    {
+      "name": "ModuBold",
+      "file": "GangwonEduModuBold.ttf"
+    },
+    {
+      "name": "ModuLight",
+      "file": "GangwonEduModuLight.ttf"
+    },
+    {
+      "name": "Hyunok",
+      "file": "GangwonEduHyunok.ttf"
+    },
+    {
+      "name": "Saeum",
+      "file": "GangwonEduSaeum.ttf"
+    }
+  ]
+}
+

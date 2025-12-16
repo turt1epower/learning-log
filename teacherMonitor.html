@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>배움공책 - 교사 모니터링</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+    <div class="teacher-container">
+        <!-- 헤더 -->
+        <header class="teacher-header">
+            <h1>👩‍🏫 교사 모니터링</h1>
+            <div class="user-info">
+                <span id="teacherName"></span>
+                <button id="teacherLogoutBtn" class="logout-btn">로그아웃</button>
+            </div>
+        </header>
+
+        <!-- 달력 영역 -->
+        <div class="calendar-section">
+            <div class="calendar-header">
+                <button id="prevMonthBtn" class="calendar-nav-btn">◀</button>
+                <h2 id="calendarMonthTitle"></h2>
+                <button id="nextMonthBtn" class="calendar-nav-btn">▶</button>
+            </div>
+            <div id="calendar" class="teacher-calendar"></div>
+        </div>
+
+        <!-- 메인 콘텐츠 영역 -->
+        <div class="teacher-main-content">
+            <!-- 왼쪽: 학생 목록 -->
+            <div class="students-list-panel">
+                <h3 id="studentsListTitle">학생 목록</h3>
+                <div id="studentsList" class="students-list">
+                    <p class="empty-message">날짜를 선택해주세요.</p>
+                </div>
+            </div>
+
+            <!-- 오른쪽: 배움공책 내용 -->
+            <div class="submission-detail-panel">
+                <div id="submissionDetail" class="submission-detail">
+                    <p class="empty-message">학생을 선택해주세요.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="/src/admin.js"></script>
+</body>
+</html>
+

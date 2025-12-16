@@ -975,6 +975,7 @@ async function sendMorningMessage() {
 
     // 로딩 표시
     const loadingId = addChatMessage('assistant', '생각 중...', 'chatMessages');
+    const loadingWrapperId = 'wrapper_' + loadingId;
 
     try {
         // 대화 턴수에 따라 system message 동적 조정
@@ -992,14 +993,9 @@ async function sendMorningMessage() {
         morningChatMessages.push({ role: 'assistant', content: response });
         
         // 로딩 메시지 제거하고 실제 응답 추가 (타이핑 효과)
-        const loadingElement = document.getElementById(loadingId);
-        if (loadingElement) {
-            const wrapperElement = loadingElement.closest('.chat-message-wrapper');
-            if (wrapperElement) {
-                wrapperElement.remove();
-            } else if (loadingElement.parentElement) {
-                loadingElement.parentElement.remove();
-            }
+        const loadingWrapper = document.getElementById(loadingWrapperId);
+        if (loadingWrapper) {
+            loadingWrapper.remove();
         }
         addChatMessage('assistant', response, 'chatMessages', true);
 
@@ -1036,14 +1032,9 @@ async function sendMorningMessage() {
             }, typingDelay + 500);
         }
     } catch (error) {
-        const loadingElement = document.getElementById(loadingId);
-        if (loadingElement) {
-            const wrapperElement = loadingElement.closest('.chat-message-wrapper');
-            if (wrapperElement) {
-                wrapperElement.remove();
-            } else if (loadingElement.parentElement) {
-                loadingElement.parentElement.remove();
-            }
+        const loadingWrapper = document.getElementById(loadingWrapperId);
+        if (loadingWrapper) {
+            loadingWrapper.remove();
         }
         addChatMessage('assistant', '미안, 뭔가 오류가 난 것 같아. 잠시 후에 다시 한 번 시도해 줄래?', 'chatMessages', true);
         console.error(error);

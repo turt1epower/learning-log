@@ -3466,18 +3466,35 @@ async function loadSubjectLessons(subject) {
                             `;
                         }
                         
-                        if (contentData.hasDrawing && contentData.drawing) {
-                            try {
-                                const drawingData = JSON.parse(contentData.drawing);
-                                html += `
-                                    <div class="drawing-preview" style="position: relative; display: inline-block; margin-top: 10px;">
-                                        <img src="${drawingData.canvas}" alt="도식" style="max-width: 100%; border: 1px solid #ddd; display: block; border-radius: 8px;" />
-                                    </div>
-                                `;
-                            } catch (e) {
-                                html += `<p>도식 데이터를 불러올 수 없습니다.</p>`;
-                            }
+                    if (contentData.hasDrawing && contentData.drawing) {
+                        try {
+                            const drawingData = JSON.parse(contentData.drawing);
+                            const cropWidth = drawingData.cropWidth || drawingData.originalWidth || 1;
+                            const cropHeight = drawingData.cropHeight || drawingData.originalHeight || 1;
+                            html += `
+                                <div class="drawing-preview" style="position: relative; display: inline-block; margin-top: 10px;">
+                                    <img src="${drawingData.canvas}" alt="도식" style="max-width: 100%; border: 1px solid #ddd; display: block; border-radius: 8px;" />
+                                    ${drawingData.textBoxes ? drawingData.textBoxes.map(box => `
+                                        <div class="text-box-preview" style="
+                                            position: absolute;
+                                            left: ${(box.x / cropWidth) * 100}%;
+                                            top: ${(box.y / cropHeight) * 100}%;
+                                            transform: translate(-0%, -0%);
+                                            background: rgba(255,255,255,0.9);
+                                            padding: 5px;
+                                            border: 1px solid #ff6b35;
+                                            border-radius: 3px;
+                                            font-size: 0.9em;
+                                        ">
+                                            ${box.text}
+                                        </div>
+                                    `).join('') : ''}
+                                </div>
+                            `;
+                        } catch (e) {
+                            html += `<p>도식 데이터를 불러올 수 없습니다.</p>`;
                         }
+                    }
                     } else {
                         if (firstLesson.recordType === 'text' || firstLesson.recordType === 'both') {
                             html += `<div style="line-height: 1.6; padding: 10px; background: #fff5f0; border-radius: 8px;">${firstLesson.content}</div>`;
@@ -3486,9 +3503,26 @@ async function loadSubjectLessons(subject) {
                         if (firstLesson.recordType === 'drawing' || firstLesson.recordType === 'both') {
                             try {
                                 const drawingData = JSON.parse(firstLesson.content);
+                                const cropWidth = drawingData.cropWidth || drawingData.originalWidth || 1;
+                                const cropHeight = drawingData.cropHeight || drawingData.originalHeight || 1;
                                 html += `
                                     <div class="drawing-preview" style="position: relative; display: inline-block; margin-top: 10px;">
                                         <img src="${drawingData.canvas}" alt="도식" style="max-width: 100%; border: 1px solid #ddd; display: block; border-radius: 8px;" />
+                                        ${drawingData.textBoxes ? drawingData.textBoxes.map(box => `
+                                            <div class="text-box-preview" style="
+                                                position: absolute;
+                                                left: ${(box.x / cropWidth) * 100}%;
+                                                top: ${(box.y / cropHeight) * 100}%;
+                                                transform: translate(-0%, -0%);
+                                                background: rgba(255,255,255,0.9);
+                                                padding: 5px;
+                                                border: 1px solid #ff6b35;
+                                                border-radius: 3px;
+                                                font-size: 0.9em;
+                                            ">
+                                                ${box.text}
+                                            </div>
+                                        `).join('') : ''}
                                     </div>
                                 `;
                             } catch (e) {

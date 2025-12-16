@@ -1312,7 +1312,9 @@ async function restartMorningChat() {
     }
 }
 
-// 수업 기록 - 텍스트와 도식을 동시에 사용 가능하도록
+// 수업 기록 - 텍스트, 도식, 사진(리사이징 후 업로드) 사용
+let uploadedPhoto = null; // 리사이즈된 사진 Blob
+
 document.querySelectorAll('.record-type-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         // 토글 방식으로 변경 (둘 다 활성화 가능)
@@ -1355,21 +1357,11 @@ document.querySelectorAll('.record-type-btn').forEach(btn => {
                     photoFileInput.value = '';
                 }
             }
-        } else if (type === 'photo') {
-            const photoArea = document.getElementById('photoInputArea');
-            if (btn.classList.contains('active')) {
-                photoArea.style.display = 'block';
-            } else {
-                photoArea.style.display = 'none';
-            }
         }
     });
 });
 
-// 사진 첨부 관련 변수
-let uploadedPhoto = null;
-
-// 사진 선택 버튼
+// 사진 선택 버튼 → 파일 선택창 열기
 document.getElementById('selectPhotoBtn')?.addEventListener('click', () => {
     document.getElementById('photoFileInput')?.click();
 });
@@ -1396,10 +1388,8 @@ function resizeImage(file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) {
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 
-                // 이미지 그리기
                 ctx.drawImage(img, 0, 0, width, height);
                 
-                // Canvas를 Blob으로 변환
                 canvas.toBlob((blob) => {
                     if (blob) {
                         resolve(blob);
@@ -1457,8 +1447,8 @@ document.getElementById('photoFileInput')?.addEventListener('change', async (e) 
                 document.getElementById('removePhotoBtn')?.addEventListener('click', () => {
                     uploadedPhoto = null;
                     previewContainer.innerHTML = '';
-                    document.getElementById('photoFileInput').value = '';
-                    // 사진 버튼 비활성화
+                    const fileInput = document.getElementById('photoFileInput');
+                    if (fileInput) fileInput.value = '';
                     if (photoBtn) {
                         photoBtn.classList.remove('active');
                     }
@@ -1467,7 +1457,7 @@ document.getElementById('photoFileInput')?.addEventListener('change', async (e) 
                     }
                 });
             };
-            reader.readAsDataURL(resizedBlob);
+            reader.readAsDataURL(file);
         }
     } catch (error) {
         console.error('이미지 처리 오류:', error);
@@ -2232,7 +2222,7 @@ document.getElementById('saveLessonBtn').addEventListener('click', async () => {
         return;
     }
     
-    // 텍스트, 도식, 사진 모두 확인
+    // 텍스트, 도식, 사진 활성 여부 확인
     const textActive = document.getElementById('textInputArea').classList.contains('active');
     const drawingActive = document.getElementById('drawingArea').classList.contains('active');
     const photoActive = document.querySelector('.record-type-btn[data-type="photo"]')?.classList.contains('active');
@@ -2287,8 +2277,8 @@ document.getElementById('saveLessonBtn').addEventListener('click', async () => {
         });
     }
     
-    // 사진 업로드 (uploadedPhoto가 있으면 자동으로 photoActive로 간주)
-    const hasPhoto = uploadedPhoto !== null;
+    // 사진 업로드 (리사이즈된 Blob 이 있는 경우에만)
+    const hasPhoto = !!uploadedPhoto;
     if (hasPhoto) {
         try {
             const today = format(new Date(), 'yyyy-MM-dd');
@@ -2303,7 +2293,7 @@ document.getElementById('saveLessonBtn').addEventListener('click', async () => {
         }
     }
     
-    // 기록 타입 결정
+    // 기록 타입 결정 (텍스트 / 도식 / 사진 조합)
     const activeTypes = [];
     if (textActive) activeTypes.push('text');
     if (drawingActive) activeTypes.push('drawing');
@@ -2344,18 +2334,6 @@ document.getElementById('saveLessonBtn').addEventListener('click', async () => {
             lessonData.photoUrl = photoUrl;
         }
         await setDoc(lessonRef, lessonData, { merge: true });
-    }
-    
-    // 저장 후 초기화
-    if (photoActive || hasPhoto) {
-        uploadedPhoto = null;
-        const previewContainer = document.getElementById('photoPreviewContainer');
-        if (previewContainer) {
-            previewContainer.innerHTML = '';
-        }
-        document.getElementById('photoFileInput').value = '';
-        document.querySelector('.record-type-btn[data-type="photo"]')?.classList.remove('active');
-        document.getElementById('photoInputArea').style.display = 'none';
     }
     
     console.log('저장 완료:', selectedPeriods, subject, recordType);
@@ -3372,9 +3350,20 @@ async function loadSubjectLessons(subject) {
                 try {
                     const contentData = JSON.parse(firstLesson.content);
                     
-                    if (contentData.hasText !== undefined && contentData.hasDrawing !== undefined) {
+                    if (contentData.hasText !== undefined || contentData.hasDrawing !== undefined || contentData.hasPhoto !== undefined) {
                         if (contentData.hasText && contentData.text) {
                             html += `<div style="line-height: 1.6; margin-bottom: 15px; padding: 10px; background: #fff5f0; border-radius: 8px;">${contentData.text}</div>`;
+                        }
+                        
+                        if (contentData.hasPhoto && contentData.photo) {
+                            html += `
+                                <div style="margin-top: 15px;">
+                                    <strong>사진:</strong>
+                                    <div style="margin-top: 10px;">
+                                        <img src="${contentData.photo}" alt="업로드된 사진" style="max-width: 100%; max-height: 500px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
+                                    </div>
+                                </div>
+                            `;
                         }
                         
                         if (contentData.hasDrawing && contentData.drawing) {
@@ -3583,18 +3572,17 @@ async function loadReviewLessons() {
                 const contentData = JSON.parse(firstLesson.content);
                 
                 // 새로운 형식인지 확인
-                if (contentData.hasText !== undefined && contentData.hasDrawing !== undefined) {
-                    // 새로운 형식: 텍스트와 도식 모두 포함 가능
+                if (contentData.hasText !== undefined || contentData.hasDrawing !== undefined || contentData.hasPhoto !== undefined) {
+                    // 새로운 형식: 텍스트 / 도식 / 사진 조합
                     if (contentData.hasText && contentData.text) {
                         contentHtml += `<div class="review-lesson-content"><strong>텍스트:</strong><div style="margin-top: 10px;">${contentData.text}</div></div>`;
                     }
-                    if (contentData.hasPhoto && (contentData.photo || firstLesson.photoUrl)) {
-                        const photoUrl = contentData.photo || firstLesson.photoUrl;
+                    if (contentData.hasPhoto && contentData.photo) {
                         contentHtml += `
                             <div class="review-lesson-content" style="margin-top: 15px;">
                                 <strong>사진:</strong>
                                 <div style="margin-top: 10px;">
-                                    <img src="${photoUrl}" alt="업로드된 사진" style="max-width: 100%; max-height: 500px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
+                                    <img src="${contentData.photo}" alt="업로드된 사진" style="max-width: 100%; max-height: 500px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
                                 </div>
                             </div>
                         `;
@@ -3713,8 +3701,8 @@ async function editLesson(period) {
         const contentData = JSON.parse(lesson.content);
         
         // 새로운 형식인지 확인
-        if (contentData.hasText !== undefined || contentData.hasDrawing !== undefined || contentData.hasPhoto !== undefined) {
-            // 새로운 형식: 텍스트, 도식, 사진 모두 포함 가능
+        if (contentData.hasText !== undefined || contentData.hasDrawing !== undefined) {
+            // 새로운 형식: 텍스트, 도식 포함 (사진 기능 제거)
             if (contentData.hasText && contentData.text) {
                 document.querySelector('.record-type-btn[data-type="text"]').click();
                 document.getElementById('lessonText').innerHTML = contentData.text;
@@ -3752,30 +3740,7 @@ async function editLesson(period) {
                 }
             }
             
-            if (contentData.hasPhoto && (contentData.photo || lesson.photoUrl)) {
-                document.querySelector('.record-type-btn[data-type="photo"]').click();
-                const photoUrl = contentData.photo || lesson.photoUrl;
-                const previewContainer = document.getElementById('photoPreviewContainer');
-                if (previewContainer) {
-                    previewContainer.innerHTML = `
-                        <div style="position: relative; display: inline-block;">
-                            <img src="${photoUrl}" alt="업로드된 사진" style="max-width: 100%; max-height: 400px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
-                            <button id="removePhotoBtn" style="position: absolute; top: 5px; right: 5px; background: rgba(255,0,0,0.7); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 18px;">×</button>
-                        </div>
-                    `;
-                    // 삭제 버튼 이벤트
-                    document.getElementById('removePhotoBtn')?.addEventListener('click', () => {
-                        uploadedPhoto = null;
-                        previewContainer.innerHTML = '';
-                        document.getElementById('photoFileInput').value = '';
-                    });
-                }
-                // 업로드된 사진을 다시 업로드하기 위해 URL을 Blob으로 변환할 수도 있지만, 
-                // 수정 시에는 기존 사진이 그대로 유지되도록 photoUrl을 저장
-                if (lesson.photoUrl) {
-                    // photoUrl이 있으면 수정 시에도 유지되도록 설정
-                }
-            }
+            // 사진 관련 로드는 더 이상 사용하지 않음
         } else {
             // 기존 형식
             if (lesson.recordType === 'text') {

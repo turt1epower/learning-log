@@ -4,12 +4,15 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
-// Firebase 설정 (실제 프로젝트의 설정값으로 교체해야 합니다)
+// Firebase 설정
+// ⚠️ storageBucket 은 Firebase 콘솔에서 제공하는 형식(보통 "<projectId>.appspot.com")을 사용해야
+// Firebase Storage 업로드가 정상 동작합니다.
 const firebaseConfig = {
   apiKey: "AIzaSyA-9lJU40kkicjT7-HLVxhkUrqMKMwBtek",
   authDomain: "learning-log-be16a.firebaseapp.com",
   projectId: "learning-log-be16a",
-  storageBucket: "learning-log-be16a.firebasestorage.app",
+  // Firebase 콘솔의 기본 버킷 도메인 형식으로 수정
+  storageBucket: "learning-log-be16a.appspot.com",
   messagingSenderId: "4739118094",
   appId: "1:4739118094:web:08014a5113b6069d68f85f"
 };

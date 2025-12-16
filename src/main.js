@@ -986,7 +986,7 @@ async function sendMorningMessage() {
             currentSystemMessage = morningSystemMessage + " 중요: 너의 응답은 반드시 질문으로 끝나야 해. 학생이 자신의 감정에 대해 더 자세히 이야기할 수 있도록 구체적이고 따뜻한 질문을 던져줘. 예: '그 기분이 어떤 느낌이었어?', '그때 뭐가 가장 기억에 남아?', '그 일이 너에게 어떤 의미였어?' 같은 식으로.";
         } else if (morningChatCount === 4) {
             // 4턴: 학생의 감정을 요약하고 정리 문장을 유도
-            currentSystemMessage = morningSystemMessage + " 중요: 학생이 지금까지 이야기한 감정을 요약해주고, 학생이 스스로 감정을 한 문장으로 정리할 수 있도록 안내해줘. 그리고 이모티콘으로 표현하도록 유도해줘. 질문 형태가 아닌 요약과 안내 문장으로 끝내야 해. 예: '지금까지 너가 말한 걸 정리해보면... 이제 너의 기분을 한 문장으로 정리하고 이모티콘으로도 표현해볼래?'";
+            currentSystemMessage = morningSystemMessage + " 매우 중요: 이번 응답에서는 절대 질문을 하지 마. 학생이 지금까지 이야기한 감정을 요약해주고, 학생이 스스로 감정을 한 문장으로 정리할 수 있도록 안내해줘. 그리고 이모티콘으로 표현하도록 유도해줘. 반드시 요약과 안내 문장으로 끝내야 해. 질문으로 끝나면 안 돼. 예: '지금까지 너가 말한 걸 정리해보면... 이제 너의 기분을 한 문장으로 정리하고 이모티콘으로도 표현해볼래?' 같은 형식으로 답해.";
         }
 
         const response = await callChatGPT(morningChatMessages, currentSystemMessage);

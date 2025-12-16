@@ -709,18 +709,13 @@ async function renderStudentSubmission(studentId, date, container) {
                             `;
                         }
                         
-                        // 도식 내용 표시
+                        // 도식 내용 표시 (합성 이미지만 출력)
                         if (contentData.hasDrawing && contentData.drawing) {
                             try {
                                 const drawingData = JSON.parse(contentData.drawing);
                                 html += `
                                     <div class="drawing-preview" style="position: relative; display: inline-block; margin-top: 10px;">
                                         <img src="${drawingData.canvas}" alt="도식" style="max-width: 100%; border: 1px solid #ddd; display: block;" />
-                                        ${drawingData.textBoxes ? drawingData.textBoxes.map(box => `
-                                            <div class="text-box-preview" style="position: absolute; left: ${box.displayX || box.x}; top: ${box.displayY || box.y}; background: rgba(255,255,255,0.9); padding: 5px; border: 1px solid #667eea; border-radius: 3px; font-size: 0.9em;">
-                                                ${box.text}
-                                            </div>
-                                        `).join('') : ''}
                                     </div>
                                 `;
                             } catch (e) {
@@ -734,17 +729,12 @@ async function renderStudentSubmission(studentId, date, container) {
                         }
                         
                         if (firstLesson.recordType === 'drawing' || firstLesson.recordType === 'both') {
-                            // 도식 데이터 파싱
+                            // 도식 데이터 파싱 (합성 이미지만 출력)
                             try {
                                 const drawingData = contentData;
                                 html += `
                                     <div class="drawing-preview" style="position: relative; display: inline-block; margin-top: 10px;">
                                         <img src="${drawingData.canvas}" alt="도식" style="max-width: 100%; border: 1px solid #ddd; display: block;" />
-                                        ${drawingData.textBoxes ? drawingData.textBoxes.map(box => `
-                                            <div class="text-box-preview" style="position: absolute; left: ${box.displayX || box.x}; top: ${box.displayY || box.y}; background: rgba(255,255,255,0.9); padding: 5px; border: 1px solid #667eea; border-radius: 3px; font-size: 0.9em;">
-                                                ${box.text}
-                                            </div>
-                                        `).join('') : ''}
                                     </div>
                                 `;
                             } catch (e) {
